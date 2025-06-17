@@ -2,3 +2,4 @@ Flask
 numpy
 pytest
 uuid 
+gunicorn 
