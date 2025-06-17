@@ -37,13 +37,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleImageClick(event) {
         const winner = event.target.dataset.winner;
         const loser = event.target.dataset.loser;
+        const pair = [winner, loser].sort();
         
         fetch('/api/compare', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ winner, loser }),
+            body: JSON.stringify({ winner, loser, pair }),
         })
         .then(response => response.json())
         .then(data => {

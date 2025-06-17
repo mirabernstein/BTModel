@@ -3,8 +3,9 @@ import os
 import itertools
 import uuid
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 from .bradley_terry import calculate_scores
+from . import pair_generator
 
 app = Flask(__name__,
             template_folder=os.path.abspath('frontend/templates'),
@@ -29,19 +30,29 @@ def get_objects():
 
 @app.route('/api/pairs')
 def get_pairs():
-    # This will be replaced with the new pair generation logic.
-    pairs = list(itertools.combinations(OBJECTS, 2))
-    return jsonify(pairs)
+    if 'user_id' not in session:
+        return jsonify({"error": "user not initialized"}), 400
+
+    if 'pairs' not in session or not session['pairs']:
+        session['pairs'] = pair_generator.get_new_pairs_for_user(OBJECTS)
+    
+    return jsonify(session['pairs'])
 
 @app.route('/api/compare', methods=['POST'])
 def compare():
     data = request.json
     winner = data.get('winner')
     loser = data.get('loser')
+    pair = tuple(sorted(data.get('pair', [])))
     user_id = session.get('user_id', 'unknown')
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
 
-    if winner and loser:
+    if winner and loser and pair:
+        # Remove pair from session
+        if 'pairs' in session:
+            session['pairs'] = [p for p in session['pairs'] if tuple(sorted(p)) != pair]
+            session.modified = True
+
         # Log to CSV
         csv_file = 'data/comparisons.csv'
         file_exists = os.path.isfile(csv_file)
