@@ -14,7 +14,7 @@ def test_end_to_end_simulation():
     and verifies the Bradley-Terry model's output.
     """
     objects = ['puppy1.jpg', 'puppy2.jpg', 'puppy3.jpg', 'puppy4.jpg']
-    num_users = 20
+    num_users = 1000
     all_comparisons = []
 
     print("\n--- Starting End-to-End Simulation ---")
