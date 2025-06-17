@@ -24,4 +24,15 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest 
+        pytest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - name: Deploy to server
+      run: |
+        echo "Deploying to production server..."
+        # Add your deployment commands here.
+        # For example, you might use scp or rsync to copy files,
+        # or use a tool like Ansible or Docker to deploy your application. 
