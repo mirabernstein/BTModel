@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showNextPair() {
         if (currentPairIndex >= pairs.length) {
-            comparisonContainer.innerHTML = '<h2>Thanks for your feedback!</h2><a href="/results">View Results</a>';
+            comparisonContainer.innerHTML = '<h2>Thanks for your feedback!</h2>';
             return;
         }
 
