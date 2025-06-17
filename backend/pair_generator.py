@@ -27,30 +27,19 @@ def save_used_pairs(pairs):
 
 def get_new_pairs_for_user(objects):
     """
-    Gets a new set of disjoint pairs for a user.
-    Ensures no pair is shown to more than one user.
+    Gets a new set of disjoint pairs for a user by shuffling the object list.
+    This is fast and scalable.
     """
-    all_pairs = get_all_pairs(objects)
-    used_pairs = get_used_pairs()
+    if len(objects) < 2:
+        return []
 
-    available_pairs = [p for p in all_pairs if p not in used_pairs]
-    random.shuffle(available_pairs)
+    # Create a mutable copy and shuffle it
+    shuffled_objects = list(objects)
+    random.shuffle(shuffled_objects)
 
-    new_pairs_for_user = []
-    used_objects_for_user = set()
-    
-    for pair in available_pairs:
-        if pair[0] not in used_objects_for_user and pair[1] not in used_objects_for_user:
-            new_pairs_for_user.append(pair)
-            used_objects_for_user.add(pair[0])
-            used_objects_for_user.add(pair[1])
+    # Create disjoint pairs from the shuffled list
+    new_pairs = []
+    for i in range(0, len(shuffled_objects) - 1, 2):
+        new_pairs.append(tuple(sorted((shuffled_objects[i], shuffled_objects[i+1]))))
 
-    num_pairs_to_return = len(objects) // 2
-    selected_pairs = new_pairs_for_user[:num_pairs_to_return]
-
-    # Update the master list of used pairs
-    for pair in selected_pairs:
-        used_pairs.add(pair)
-    save_used_pairs(used_pairs)
-
-    return selected_pairs
+    return new_pairs

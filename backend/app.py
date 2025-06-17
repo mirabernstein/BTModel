@@ -5,6 +5,7 @@ import uuid
 import csv
 from datetime import datetime, timezone
 from .bradley_terry import calculate_scores
+from . import config
 from . import pair_generator
 
 app = Flask(__name__,
@@ -14,8 +15,14 @@ app = Flask(__name__,
 # This should be a long, random string.
 app.secret_key = 'dev' 
 
-# In a real application, you would get this from a database or a configuration file.
-OBJECTS = ['puppy1.jpg', 'puppy2.jpg', 'puppy3.jpg', 'puppy4.jpg']
+def load_objects(file_path):
+    try:
+        with open(file_path, 'r') as f:
+            return [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        return []
+
+OBJECTS = load_objects(config.OBJECTS_FILE)
 comparisons = []
 
 @app.route('/')
@@ -33,8 +40,9 @@ def get_pairs():
     if 'user_id' not in session:
         return jsonify({"error": "user not initialized"}), 400
 
-    if 'pairs' not in session or not session['pairs']:
-        session['pairs'] = pair_generator.get_new_pairs_for_user(OBJECTS)
+    if 'pairs' not in session or not session.get('pairs'):
+        pairs = pair_generator.get_new_pairs_for_user(OBJECTS)
+        session['pairs'] = pairs
     
     return jsonify(session['pairs'])
 

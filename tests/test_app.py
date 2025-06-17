@@ -1,12 +1,17 @@
 import pytest
 import json
 import os
-import tempfile
 from backend.app import app as flask_app
+from backend import app as app_module
+
+# Test data
+TEST_OBJECTS = ['test_obj1', 'test_obj2', 'test_obj3', 'test_obj4']
 
 @pytest.fixture
 def app():
-    # Setup a temporary database and other configurations
+    # Patch the app's objects for testing
+    app_module.OBJECTS = TEST_OBJECTS
+
     flask_app.config.update({
         "TESTING": True,
     })
@@ -16,8 +21,6 @@ def app():
         os.remove('data/comparisons.csv')
     if os.path.exists('data/comparisons.jsonl'):
         os.remove('data/comparisons.jsonl')
-    if os.path.exists('data/used_pairs.json'):
-        os.remove('data/used_pairs.json')
 
     yield flask_app
 
@@ -26,8 +29,7 @@ def app():
         os.remove('data/comparisons.csv')
     if os.path.exists('data/comparisons.jsonl'):
         os.remove('data/comparisons.jsonl')
-    if os.path.exists('data/used_pairs.json'):
-        os.remove('data/used_pairs.json')
+
 
 @pytest.fixture
 def client(app):
@@ -47,7 +49,7 @@ def test_full_user_flow(client):
     res = client.get('/api/pairs')
     assert res.status_code == 200
     pairs = res.get_json()
-    assert len(pairs) == 2 # 4 objects / 2
+    assert len(pairs) == len(TEST_OBJECTS) / 2
     
     # 3. User makes a comparison
     first_pair = pairs[0]
@@ -66,11 +68,18 @@ def test_full_user_flow(client):
         assert winner in last_line
         assert loser in last_line
 
-    # 5. User refreshes, should not get the pair they just compared
+    # 5. User makes a second comparison
+    second_pair = pairs[1]
+    winner, loser = second_pair[0], second_pair[1]
+    res = client.post('/api/compare', 
+                      data=json.dumps({'winner': winner, 'loser': loser, 'pair': tuple(sorted(second_pair))}),
+                      content_type='application/json')
+    
+    # 6. At this point, session['pairs'] is empty.
+    # When user fetches pairs again, a new batch should be generated.
     res = client.get('/api/pairs')
     assert res.status_code == 200
     remaining_pairs = res.get_json()
-    assert len(remaining_pairs) == 1
-    assert tuple(sorted(first_pair)) not in [tuple(sorted(p)) for p in remaining_pairs]
+    assert len(remaining_pairs) == len(TEST_OBJECTS) / 2
 
     # No need to clean up here, fixture does it 
